@@ -1,0 +1,278 @@
+<html>
+<head>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js" type="text/javascript"></script>
+<script type="text/javascript">
+
+var ctx;
+$(document).ready(function() {
+	var canvas = document.getElementById('test');  
+	ctx = canvas.getContext('2d');
+});
+
+
+// =========== NAMESPACE PATTERN =========== // 
+var myApp = myApp || {};
+
+// a convenience function for parsing string namespaces and 
+// automatically generating nested namespaces 
+function extend( ns, ns_string ) {
+    var parts = ns_string.split('.'),
+        parent = ns,
+        pl, i;
+
+    if (parts[0] == "myApp") {
+        parts = parts.slice(1);
+    }
+
+    pl = parts.length;
+    for (i = 0; i < pl; i++) {
+        // create a property if it doesnt exist
+        if (typeof parent[parts[i]] == 'undefined') {
+            parent[parts[i]] = {};
+        }
+
+        parent = parent[parts[i]];
+    }
+
+    return parent;
+}
+
+var mod = extend(myApp, 'myApp.modules.module2');
+mod.test = "toto";
+
+console.log("---- TEST NAMESPACE ----");
+console.log(mod.test  + " // print mod.test");
+console.log(myApp.modules.module2.test  + " // print myApp.modules.module2.test");
+
+
+//=========== MODULE PATTERN =========== // 
+var testModule = (function() {
+    // private module var and methods 
+    // function doSomethingPrivate(){} 
+
+	return  {
+		
+		// public var and methods 
+        test:function(x,y){
+            // constructor 
+            function myConstructor(x,y){
+            	this.x = x ;
+            	this.y = y;
+            	
+            	this.doubleX = function() {
+            		this.x = this.x*2;
+            	}
+            	
+            }
+            
+            var that = new myConstructor(x,y);
+            
+            // private methods and variables 
+            var secret = 10;
+            
+            function secretF () {
+            	that.x = that.x + secret;
+            }
+            
+            // public methods 
+            that.test = function() {
+            	return that.x;
+            }
+            
+            secretF();
+            return that;
+       }
+	}
+}());
+var t = new testModule.test(1,2);
+
+console.log("---- TEST MODULE ----");
+console.log(t.test() + " // should be equal to 11");
+t.doubleX();
+console.log(t.test() + " // should be equal to 22");
+console.log(t.secretF + " // undefined because private function")
+
+
+//=========== 2GRID MAP  =========== // 
+function GridMap() {
+	var that = {};
+	that.map = [];
+	that.update = function (x,y,value) {
+	    if ( that.map[x] == undefined) {
+	    	that.map[x] = []; 
+	    	that.map[x][y] = value;
+	    } else {
+	    	that.map[x][y] = value;
+	    }
+	}
+	that.getValue = function(x,y) {
+		if ( that.map[x] == undefined) return false;
+		else {
+			if ( that.map[x][y] == undefined) return false;
+			else return that.map[x][y];
+		}
+	}
+    that.deleteValue = function (x,y) {
+    	if ( that.map[x] != undefined) {
+    	    delete that.map[x][y]
+
+            if ( that.map[x].length == 0 ) {
+            	delete that.map[x];
+            }
+    	}
+    }
+	that.reset = function() {
+		that.map = [];
+	}
+	return that;
+}
+console.log("---- TEST GRIDMAP ----");
+var test = new GridMap();
+console.log( "// 0,1=apple / 0,2 = apple2 " )
+test.update(0,1,"apple");
+test.update(0,2,"apple2");
+console.log( test.getValue(0,1) );
+console.log( test.getValue(0,2) );
+console.log( test.getValue(0,3) );
+console.log( "// 0,1 = delete / 0,2=apple2-2 " )
+test.update(0,2,"apple2-2");
+test.deleteValue(0,1);
+console.log( test.getValue(0,1) );
+console.log( test.getValue(0,2) );
+console.log( "// test.reset() ");
+test.reset();
+console.log( test.getValue(0,1) );
+
+test.update(0,1,"test");
+test.update(5,3,"test");
+test.update(5,4,"test");
+test.update(12,17,"test");
+console.log("try loop");
+for(var i in test.map) {
+	var t = test.map[i];
+    for(var j in t) {console.log("["+i+","+j+"] " + t[j]);}
+}
+console.log("try loop2");
+test.deleteValue(5,3);
+test.deleteValue(5,4);
+for(var i in test.map) {
+    var t = test.map[i];
+    for(var j in t) {console.log("["+i+","+j+"] " + t[j]);}
+}
+
+//=========== IMAGE LOADER  =========== // 
+var Loader;
+
+Loader = (function() {
+
+  function Loader() {
+    this.progress = 0;
+    this.assets = {};
+    this.totalAssets = 0;
+    this.loadedAssets = 0;
+  }
+
+  Loader.prototype.load = function(assets) {
+    var asset, name, _results;
+    _results = [];
+    for (name in assets) {
+      asset = assets[name];
+      _results.push(this.loadAsset(name, asset));
+    }
+    return _results;
+  };
+
+  Loader.prototype.loadProgress = function(func) {
+    return this.onprogress = func;
+  };
+
+  Loader.prototype.loadComplete = function(func) {
+    return this.onload = func;
+  };
+
+  Loader.prototype.updateProgress = function() {
+    this.progress = this.loadedAssets / this.totalAssets;
+    if (this.onprogress) this.onprogress(this.progress);
+    if (this.progress === 1 && this.onload) return this.onload();
+  };
+
+  Loader.prototype.loadAsset = function(name, asset) {
+    var basePath, img, loader;
+    img = new Image();
+    loader = this;
+    img.onload = function() {
+      this.loaded = true;
+      loader.loadedAssets++;
+      return loader.updateProgress();
+    };
+    this.assets[name] = {
+      loader: this,
+      src: asset,
+      image: img
+    };
+    this.totalAssets++;
+    basePath = window && window.basePath ? window.basePath : '';
+    return img.src = basePath + asset;
+  };
+
+  Loader.prototype.getAsset = function(name) {
+    return this.assets[name]['image'];
+  };
+
+  return Loader;
+
+})();
+
+var Globals;
+
+Globals = {
+  Loader: new Loader()
+};
+
+
+
+
+// update your progress bar ... 
+Globals.Loader.loadProgress(function(progress) {
+    console.log("progress :" + 100*progress);
+    ctx.fillStyle = 'rgb(124,213,64)';
+    ctx.fillRect(0,90,100*progress,10)
+    ctx.fill();
+});
+
+// do something when all your images are loaded ... 
+Globals.Loader.loadComplete(function(progress) {
+    console.log("Loading completed");
+
+    // draw loaded images 
+    ctx.drawImage(Globals.Loader.getAsset('ball'), 0,0,20,20)
+    ctx.drawImage(Globals.Loader.getAsset('soccerplayer'), 0,20,70,70)
+});
+var Constants;
+
+Constants = {
+    ASSETS: {
+        soccerplayer: 'assets/soccerplayer.png',
+        ball: 'assets/ball.jpg',
+        ball1: 'assets/ball.jpg',
+        ball2: 'assets/ball.jpg',
+        ball3: 'assets/ball.jpg',
+        big: 'assets/bigimage.jpg',
+        ball4: 'assets/ball.jpg',
+        ball5: 'assets/ball.jpg',
+    }
+}
+
+console.log("---- TEST IMAGE LOADER ----");
+Globals.Loader.load(Constants.ASSETS);
+
+
+
+</script>
+
+</head>
+<body>
+    <canvas id="test" width=100 height=100></canvas>
+</body>
+
+</html>
