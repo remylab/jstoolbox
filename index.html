@@ -267,6 +267,64 @@ console.log("---- TEST IMAGE LOADER ----");
 Globals.Loader.load(Constants.ASSETS);
 
 
+//=========== CLASS PATTERN  =========== // 
+var __hasProp = Object.prototype.hasOwnProperty,
+    __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor; child.__super__ = parent.prototype; return child; };
+    
+var Person;
+Person = (function() {
+    function Person(name) {
+        this.name = name;
+    }
+    Person.prototype.hello = function() {
+        console.log("hello person " + this.name);
+    };
+    
+    return Person;
+
+})();
+
+var Student;
+Student = (function(_super) {
+	__extends(Student, _super);
+	
+    function Student(name) {
+    	Student.__super__.constructor.call(this,name);
+    }
+    Student.prototype.helloStudent = function() {
+        console.log("hello student " + this.name);
+    };
+    
+    return Student;
+
+})(Person);
+
+Teacher = (function(_super) {
+    __extends(Teacher, _super);
+    
+    function Teacher(name,title) {
+    	this.title = title;
+        Student.__super__.constructor.call(this,name);
+    }
+    Teacher.prototype.helloTeacher = function() {
+    	console.log("hello " + this.title + " " + this.name);
+    };
+    
+    return Teacher;
+
+})(Student);
+
+    
+console.log("---- CLASS PATTERN ----");
+var p = new Person("remy");
+var s = new Student("john");
+var t = new Teacher("marc","assistant");
+p.hello();
+s.hello();
+s.helloStudent();
+t.hello();
+t.helloStudent();
+t.helloTeacher();
 
 </script>
 
