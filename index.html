@@ -230,11 +230,9 @@ Globals = {
 };
 
 
-
-
 // update your progress bar ... 
 Globals.Loader.loadProgress(function(progress) {
-    console.log("progress :" + 100*progress);
+    console.log("   image loader progress :" + 100*progress);
     ctx.fillStyle = 'rgb(124,213,64)';
     ctx.fillRect(0,90,100*progress,10)
     ctx.fill();
@@ -242,7 +240,7 @@ Globals.Loader.loadProgress(function(progress) {
 
 // do something when all your images are loaded ... 
 Globals.Loader.loadComplete(function(progress) {
-    console.log("Loading completed");
+    console.log("   image loader loading completed");
 
     // draw loaded images 
     ctx.drawImage(Globals.Loader.getAsset('ball'), 0,0,20,20)
@@ -292,7 +290,7 @@ Student = (function(_super) {
     	Student.__super__.constructor.call(this,name);
     }
     Student.prototype.helloStudent = function() {
-        console.log("hello student " + this.name);
+        console.log("helloStudent student " + this.name);
     };
     
     return Student;
@@ -306,8 +304,11 @@ Teacher = (function(_super) {
     	this.title = title;
         Student.__super__.constructor.call(this,name);
     }
+    Teacher.prototype.hello = function() {
+        console.log("hello (overriden) " + this.title + " " + this.name);
+    };
     Teacher.prototype.helloTeacher = function() {
-    	console.log("hello " + this.title + " " + this.name);
+    	console.log("helloTeacher " + this.title + " " + this.name);
     };
     
     return Teacher;
@@ -326,6 +327,46 @@ t.hello();
 t.helloStudent();
 t.helloTeacher();
 
+//=========== ANIMATION FRAME =========== // 
+(function() {
+  var lastTime, vendors, x, _fn, _ref;
+  lastTime = 0;
+  vendors = ['ms', 'moz', 'webkit', 'o'];
+  _fn = function(x) {
+    if (!window.requestAnimationFrame) {
+      window.requestAnimationFrame = window[vendors[x] + 'RequestAnimationFrame'];
+      return window.cancelAnimationFrame = window[vendors[x] + 'CancelAnimationFrame'] || window[vendors[x] + 'CancelRequestAnimationFrame'];
+    }
+  };
+  for (x = 0, _ref = vendors.length; 0 <= _ref ? x <= _ref : x >= _ref; 0 <= _ref ? x++ : x--) {
+    _fn.call(this, x);
+  }
+  if (!window.requestAnimationFrame) {
+    window.requestAnimationFrame = function(callback, element) {
+      var currTime, id, timeToCall;
+      currTime = new Date().getTime();
+      timeToCall = Math.max(0, 16 - (currTime - lastTime));
+      id = window.setTimeout((function() {
+        return callback(currTime + timeToCall);
+      }), timeToCall);
+      lastTime = currTime + timeToCall;
+      return id;
+    };
+  }
+  if (!window.cancelAnimationFrame) {
+    return window.cancelAnimationFrame = function(id) {
+      return window.clearTimeout(id);
+    };
+  }
+}).call(this);
+
+console.log("---- ANIMATION FRAME ----");
+var nbAnim = 0;
+(function animloop(){
+	var id = window.requestAnimationFrame(animloop);
+    console.log("tick :" + new Date().getTime() )
+    nbAnim += 1; if ( nbAnim > 4) window.cancelAnimationFrame(id);
+})();
 </script>
 
 </head>
